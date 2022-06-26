@@ -1,6 +1,7 @@
 from threading import Condition, Thread
 from time import sleep, time
 from random import choice, randint
+import numpy as np
 
 NUM_SKIERS = 120
 NUM_SEATS = 4
@@ -37,7 +38,7 @@ class Skier(Thread):
 
 
     def str(self):
-        return ('Esquiador {}'.format(self.i))
+        return ('Esquiador {}'.format(self.id))
 
     def run(self):
         #Esquiador chega p/ entrar na fila
@@ -210,9 +211,8 @@ class Skier(Thread):
 
 
 
-class Elevator(Thread):
+class Elevator:
     def __init__(self, NUM_SEATS):
-        Thread.__init__(self)
         self.seats = []
         self.NUM_SEATS = NUM_SEATS
     
