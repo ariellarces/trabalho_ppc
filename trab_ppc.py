@@ -1,7 +1,7 @@
 from threading import Condition, Thread
 from time import sleep, time
 from random import choice, randint
-import numpy as np
+#import numpy as np
 
 NUM_SKIERS = 120
 NUM_SEATS = 4
