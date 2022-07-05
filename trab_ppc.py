@@ -5,11 +5,35 @@ import numpy as np
 
 NUM_SKIERS = 120
 #NUM_SEATS = 4
+#Lista p/ guardar os esquiadores que entraram no elevador
+cont_skier = []
 
+#Lista p/ guadar os incrementos de subida do elevador
+cont_elevator = []
+
+#Filas
 LS = []
 LT = []
 RT = []
 RS = []
+
+#Lista p/ juntar o tempo de espera em fila dos esquiadores
+skier_waiting_time = []
+
+def print_filas():
+    #Imprime os esquiadores que estão nas filas
+    print("Fila LT: {}" .format(LT))
+    print("Fila RT: {}" .format(RT))
+    print("Fila LS: {}" .format(LS))
+    print("Fila RS: {}" .format(RS))
+
+def print_filas_len():
+    #Imprime a quantidade de esquiadores nas filas
+    print("Fila LT: {} pessoas" .format(len(LT)))
+    print("Fila RT: {} pessoas" .format(len(RT)))
+    print("Fila LS: {} pessoas" .format(len(LS)))
+    print("Fila RS: {} pessoas" .format(len(RS)))
+    print(" ")
 
 class Skier(Thread):
     def __init__(self, cv, i):
@@ -17,14 +41,11 @@ class Skier(Thread):
         self.condition = cv
         self.i = i
 
-#    def Skier(self):
-#        self.skier = self
-
     def run(self):
         #Esquiador chega p/ entrar na fila
         print("Esquiador chega na fila")
         print(" ")
-        waiting_time = time()
+        start_waiting_time = time()
 
         #Condições p/ escolha de fila
 
@@ -33,174 +54,126 @@ class Skier(Thread):
             LS.append(self.i)
             #print("Esquiador {} entrou na fila LS" .format(self))
             print("Esquiador {} entrou na fila LS" .format(self.i))
+            skier_waiting_time.append(time() - start_waiting_time)
             print(" ")
+            print_filas_len()
 
         elif (len(RS) < 2 * len(LT) and len(RS) < 2 * len(RT) and len(RS) <= len(LS)):
             RS.append(self.i)
             print("Esquiador {} entrou na fila RS" .format(self.i))
+            skier_waiting_time.append(time() - start_waiting_time)
             print(" ")
+            print_filas_len()
 
         elif (len(LT) <= len(RT)):
             LT.append(self.i)
             print("Esquiador {} entrou na fila LT".format(self.i))
+            skier_waiting_time.append(time() - start_waiting_time)
             print(" ")
+            print_filas_len()
 
         else:
             RT.append(self.i)
             print("Esquiador {} entrou na fila RT" .format(self.i))
+            skier_waiting_time.append(time() - start_waiting_time)
             print(" ")
+            print_filas_len()
 
-
-        print("Fila LT: {}" .format(LT))
-        print("Fila RT: {}" .format(RT))
-        print("Fila LS: {}" .format(LS))
-        print("Fila RS: {}" .format(RS))
 
 class Elevator(Thread):
-    #print('i')
     def __init__(self, cv):
         Thread.__init__(self)
         self.condition = cv
         #self.i = i
 
     def run(self):
-        print("chegou aqui")
+        #Variável p/ contar os esquiadores que entraram no elevador
+        cont_skier.append(1)
         NUM_SEATS = 4
         with(self.condition):
             while(True):
                 #Condição p/ Elevador subir apenas com uma tripla
                 lefttriple = False
                 righttriple = False
-                #print('a')
-                random = randint(0,1)
-                #random = 0
-                print("random: {}" .format(random))
-                if (random == 0):
-                    print("Checagem Condicional 1")
+
+                flag0 = choice(["LT", "RT"])
+
+                if (flag0 == "LT"):
                     if (len(LT) > 2 and NUM_SEATS > 2):
-                        for i in range(3, 0, -1):
-                            #LT.remove(LT[i-1])
-                            LT.pop()
+                        for i in range(0, 3):
+                            LT.pop(0)
                             NUM_SEATS = NUM_SEATS - 1
-                            #Tempo na fila
-                            
-                        #LT = LT[:len(LT)-2]         #### Exception 
 
-
+                        print(" ")
                         print("Saiu da fila LT")
-                        #print("num seats1: ")
-                        #print(NUM_SEATS)
+                        print_filas_len()
 
                         lefttriple = True
                         self.condition.wait()
                         continue
-                    elif(lefttriple == False):  #LT vazio -> serve RT até ter pessoas suficientes em LT
-                        print("Checagem Condicional 2")
+
+                    #LT vazio -> serve RT até ter pessoas suficientes em LT
+                    elif(lefttriple == False):
                         if (len(RT) > 2 and NUM_SEATS > 2):
-                            for i in range(3, 0, -1):
-                                #RT.remove(RT[i-1])
-                                RT.pop()
+                            for i in range(0, 3):
+                                RT.pop(0)
                                 NUM_SEATS = NUM_SEATS - 1
-                                
-                                #Tempo na fila
-                            
+
+                            print(" ")
                             print("Saiu da fila RT")
-                            #print("num seats2: ")
-                            #print(NUM_SEATS)
-                            
+                            print_filas_len()
+                                    
                             righttriple = True
                             self.condition.wait()
                             continue
+
                 #Caso LT e RT estejam vazias
-                if (lefttriple == False and righttriple == False):
+                elif (lefttriple == False and righttriple == False):
+
                     #Variáveis de auxílio p/ variar entre as filas
-                    
                     leftsingle = False
                     rightsingle = False
 
                     flag = choice(["LS", "RS"])
-                    print("Flag: {}" .format(flag))
                     
 
                     #Alternar entre RS e LS
-                    #while (NUM_SEATS > 0 and (len(LS) > 0 or len(RS)) > 0): #Enquanto houver assentos disponíveis e LS e RS > 0
                     while (NUM_SEATS > 0):  #Enquanto houver assentos disponíveis e LS e RS > 0
-                        # conferir
                         
                         if (flag == "LS"):
-                            if (len(LS) > 0):   #Incluir rightsingle aqui ?????
-                                #LS.remove(LS[0])
-                                LS.pop()
+                            if (len(LS) > 0):
+                                LS.pop(0)
                                 NUM_SEATS = NUM_SEATS - 1
-                                #self.NUM_SEATS = self.NUM_SEATS - 1
                                 #Tempo na fila
-
+                                print(" ")
                                 print("Saiu da fila LS")
-                                #print("Num seats3: ")
-                                #print(NUM_SEATS)
+                                print_filas_len()
 
                             leftsingle = True
                             self.condition.wait()
                             continue
                         elif (flag == "RS" or leftsingle == True):
                             if (len(RS) > 0):
-                                #RS.remove(RS[0])
-                                RS.pop()
+                                RS.pop(0)
                                 NUM_SEATS = NUM_SEATS - 1
-                                #self.NUM_SEATS = self.NUM_SEATS - 1
                                 #Tempo na fila
-
-
+                                print(" ")
                                 print("Saiu da fila RS")
-                                #print("num seats4: ")
-                                #print(NUM_SEATS)
-                                
+                                print_filas_len()
+
                             rightsingle = True
                             self.condition.wait()
                             continue
-                else:
-                    #if (lefttriple == True and len(RS) > 0):
-                    if (lefttriple == True and rightsingle == True):      #nao da
-                        #RS.remove(self)
-                        RS.pop()
-                        NUM_SEATS = NUM_SEATS - 1
-                        #self.NUM_SEATS = self.NUM_SEATS - 1
-                        #Tempo na fila
-                        print("Saiu uma LT e uma RS")
-                        
-                        self.condition.wait()
-                        continue
 
-                    #if(righttriple == True and len(LS) > 0):
-                    if (righttriple == True and leftsingle == True):
-                        #LS.remove(self)
-                        LS.pop()
-                        NUM_SEATS = NUM_SEATS - 1
-                        #self.NUM_SEATS = self.NUM_SEATS - 1
-                        #Tempo na fila
-                        print("Saiu uma RT e uma LS")
-                        
-                        self.condition.wait()
-                        continue
-                
-                #Zera a contagem dos bancos, ou seja, chega outro elevador
-                print("chegou no notify all")
-                #elevator.append(self)
+                #Contador para quantas vezes o elevador subiu
+                cont_elevator.append(1)
 
+                #Fim da checagem de condições
+                #Acorda as threads em wait
+                with(self.condition):
+                    self.condition.notify_all()
+                                        
                 break
-            #sleep(4)
-
-            NUM_SEATS = 4
-            with(self.condition):
-                self.condition.notify_all()
-                print("######## SLEEP ########")
-            sleep(4)
-
-            #Espera 4 segundos e reinicia o processo
-            #print("chegou no SLEEP ")
-            #sleep(4)
-                #break
-
 
 class SkiProblem():
 
@@ -208,10 +181,8 @@ class SkiProblem():
         cv = Condition()
         i = 0
 
-        #e = Elevator(cv)
-        #e.start()
-
-        while (True):
+        #while (True):
+        for i in range(NUM_SKIERS):
             with(cv):
                 i = i + 1
                 t = Skier(cv, i)
@@ -220,22 +191,21 @@ class SkiProblem():
 
                 e = Elevator(cv)
                 e.start()
-                sleep(4)
-#        for i in range(120):
-#            e = Elevator(cv)
-#            e.start()
+                #sleep(1)
+        
+        #Variáveis usadas para o cálculo do tempo médio em fila
+        time_sum = sum(skier_waiting_time)
+        time_spent = time_sum / len(skier_waiting_time)
+        print("Tempo médio que o esquiador espera em fila: {} " .format(time_spent))
+        print(" ")
 
-#            #Cria um novo esquiador
-#            t = Skier(cv, i)
-#            t.start()
-
-#            sleep(1)
-#
-#            with(cv):
-#                cv.notify_all()
+        #Cálculo da taxa de aproveitamento
+        taxa_aproveitamento = len(cont_skier) / (len(cont_elevator) * 4)
+        print(" ")
+        print("Taxa de aproveitamento: {}" .format(taxa_aproveitamento))
+        print(" ")
+    
 
 
-#if(__name__ == '__main__'):
-#    main()
 s = SkiProblem
 s.main()
